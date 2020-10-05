@@ -1,0 +1,154 @@
+// %%%%%%%%%%%% Create a directory on the HDFS file system %%%%%%%%%%%%
+hdfs dfs -mkdir /user/cloudera/input
+
+// %%%%%%%%%%%% Copy the file from our local filesystem to the HDFS filesystem %%%%%%%%%%%%
+hdfs dfs -put /home/cloudera/Desktop/top50.txt /user/cloudera/input
+
+// %%%%%%%%%%%% Checking if the file has been copied to the  HDFS filesystem %%%%%%%%%%%%
+hdfs dfs -ls /user/cloudera/input
+
+// %%%%%%%%%%%% Start hive and create database %%%%%%%%%%%%
+hive
+create database consumer_data;
+
+// %%%%%%%%%%%% To verify if the database is created and select database %%%%%%%%%%%%
+show databases;
+use consumer_data;
+
+// %%%%%%%%%%%% Create a table top50 (50 entries from the entire dataset) and load data %%%%%%%%%%%%
+create table top50(Datereceived string, Product string, Subproduct string, Issue string, Subissuue string, Customercomplaintnarrative string, Companypublicresponse string, Company string, State string, ZIPcode string, Tags string, Consumerconsentprovided string, Submittedvia string, Datesenttocompany string, Timelyresponse string, Consumerdisputed string, ComplaintID bigint) row format delimited fields terminated by '\t';
+load data local inpath '/home/cloudera/Desktop/top50.txt' into table top50;
+
+// %%%%%%%%%%%% View and describe the tables %%%%%%%%%%%%
+show tables;
+describe top50;
+
+
+// %%%% STATE ANALYSIS %%%%%%%%%%%%
+
+// %%%%%%%%%%%% To identify the state from which maximum complaints were received %%%%%%%%%%%%	  	
+select State, count(State) as a
+    > from top50
+    > group by State
+    > order by a desc;
+
+// %%%%%%%%%%%% To analyse which ZIP code in California has the maximum no. of grieving consumers %%%%%%%%%%%%
+select ZIPcode, count(ZIPcode) as a
+    > from top50
+    > where State='CA'
+    > group by ZIPcode
+    > order by a desc;
+
+// %%%%%%%%%%%% To see which company in California are consumers complaining about %%%%%%%%%%%%
+select Company, count(Company) as a
+    > from top50
+    > where State='CA'
+    > group by Company
+    > order by a desc;
+
+
+// %%%% COMPANY ANALYSIS %%%%%%%%%%%%
+
+// %%%%%%%%%%%% To identify the company receiving the maximum no. of complaints %%%%%%%%%%%%
+select Company, count(Company) as a
+    > from top50
+    > group by Company
+    > order by a desc limit 20;
+
+// %%%%%%%%%%%% To see from which State maximum complaints against Wells Fargo are coming in %%%%%%%%%%%%
+select State, count(State) as a
+    > from top50
+    > where Company='Wells Fargo & Company'
+    > group by State
+    > order by a desc;
+
+// %%%%%%%%%%%% To see if in California State (for Wells Fargo) are the complaints coming from a particular ZIP code %%%%%%%%%%%%
+select ZIPcode, count(ZIPcode) as a
+    > from top50
+    > where Company='Wells Fargo & Company' and State='CA'
+    > group by ZIPcode
+    > order by a desc;
+
+// %%%%%%%%%%%% To see which financial product of Wells Fargo is being complained about %%%%%%%%%%%%
+select Product, count(Product) as a
+    > from top50
+    > where Company='Wells Fargo & Company'
+    > group by Product
+    > order by a desc;
+
+// %%%%%%%%%%%% To see what is the issue related to the product “Bank account or service” at Wells Fargo %%%%%%%%%%%%
+select Issue, count(Issue) as a
+    > from top50
+    > where Company='Wells Fargo & Company' and Product='Bank account or service'
+    > group by Issue
+    > order by a desc;
+
+// %%%%%%%%%%%% To see whether all the complaints for the “Bank account or service” product were responded in time or not? %%%%%%%%%%%%
+select Timelyresponse, count(Timelyresponse) as a
+    > from top50
+    > where Company='Wells Fargo & Company' and Product='Bank account or service'
+    > group by Timelyresponse
+    > order by a desc;
+
+
+// %%%% PRODUCT ANALYSIS %%%%%%%%%%%%
+
+// %%%%%%%%%%%% To identify the product receiving the maximum no. of complaints %%%%%%%%%%%%
+select Product, count(Product) as a
+    > from top50
+    > group by Product
+    > order by a desc;
+
+// %%%%%%%%%%%% Were the complaints for the product 'Mortgage' responded in time? %%%%%%%%%%%%
+select Timelyresponse, count(Timelyresponse) as a
+    > from top50
+    > where Product='Mortgage'
+    > group by Timelyresponse
+    > order by a desc;
+
+// %%%%%%%%%%%% What were the issues related to the “Mortgage” product? %%%%%%%%%%%%
+select Issue, count(Issue) as a
+    > from top50
+    > where Product='Mortgage'
+    > group by Issue
+    > order by a desc;
+
+// %%%%%%%%%%%% In which companies “Mortgage” products were being complained about the most? %%%%%%%%%%%%
+select Company, count(Company) as a
+    > from top50
+    > where Product='Mortgage'
+    > group by Company
+    > order by a desc;
+
+
+// %%%% ISSUE ANALYSIS %%%%%%%%%%%%
+
+// %%%%%%%%% To identify Top 20 issues with maximum complaints %%%%%%%%%%%%
+select Issue, count(Issue) as a
+    > from top50
+    > group by Issue
+    > order by a desc limit 20;
+
+
+// %%%% OVERALL ANALYSIS %%%%%%%%%%%%
+
+// %%%%%%%%%% To see what is the most common channel which consumers use to submit complaints %%%%%%%%%%%%
+select Submittedvia, count(Submittedvia) as a
+    > from top50
+    > group by Submittedvia
+    > order by a desc;
+
+// %%%%%%%%%%% To see whether there are specific dates or specific periods of the year during which maximum complaints are being received %%%%%%%%%%%%
+select Datereceived, count(Datereceived) as a
+    > from top50
+    > group by Datereceived
+    > order by a desc;
+
+// %%%%%%%%%%%% To see all the distinct dates in the dataset %%%%%%%%%%%%
+select distinct Datereceived
+    > from top50;
+
+// %%%%%%%%%%%% To see at an overall level whether the complaints are responded in time %%%%%%%%%%%%
+select Timelyresponse, count(Timelyresponse)
+    > from top50
+    > group by Timelyresponse;
